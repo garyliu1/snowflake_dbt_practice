@@ -1,0 +1,16 @@
+# Copy this file to ~/.dbt/profiles.yml and fill in your account details.
+# Account identifier: in Snowsight, click your name > Connect a tool to Snowflake
+# (format looks like: abc12345.ca-central-1.aws  or  orgname-accountname).
+multifamily_practice:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: YOUR_ACCOUNT_IDENTIFIER
+      user: YOUR_USERNAME
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: TRANSFORMER
+      warehouse: PRACTICE_WH
+      database: MULTIFAMILY_PRACTICE
+      schema: DEV
+      threads: 4

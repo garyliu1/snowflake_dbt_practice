@@ -1,0 +1,32 @@
+name: multifamily_practice
+version: "1.0.0"
+config-version: 2
+profile: multifamily_practice
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+# Medallion layers: seeds = Bronze (raw), silver = cleaned, gold = star schema + KPIs
+seeds:
+  multifamily_practice:
+    +schema: bronze
+    raw_leases:
+      +column_types:
+        move_in_date: date
+        move_out_date: date
+
+models:
+  multifamily_practice:
+    silver:
+      +schema: silver
+      +materialized: view
+    gold:
+      +schema: gold
+      +materialized: table
+
+snapshots:
+  multifamily_practice:
+    +schema: snapshots

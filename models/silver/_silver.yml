@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: stg_properties
+    description: Cleaned property list. One row per property.
+    columns:
+      - name: property_id
+        data_tests: [unique, not_null]
+
+  - name: stg_units
+    description: Cleaned units. unit_type is standardized to 1BR, 2BR or 3BR.
+    columns:
+      - name: unit_id
+        data_tests: [unique, not_null]
+      - name: unit_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1BR', '2BR', '3BR']
+      - name: property_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_properties')
+                field: property_id
+
+  - name: stg_residents
+    description: Cleaned residents. Email is lowercase. Contains PII (email, phone).
+    columns:
+      - name: resident_id
+        data_tests: [unique, not_null]
+
+  - name: stg_leases
+    description: Cleaned leases. One row per lease (a renewal is a new lease).
+    columns:
+      - name: lease_id
+        data_tests: [unique, not_null]
+      - name: lease_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['active', 'expired']

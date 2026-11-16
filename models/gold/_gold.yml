@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendar dimension. One row per day.
+    columns:
+      - name: date_day
+        data_tests: [unique, not_null]
+
+  - name: dim_property
+    description: Property dimension (SCD Type 1). Conformed across all facts.
+    columns:
+      - name: property_key
+        data_tests: [unique, not_null]
+
+  - name: dim_resident
+    description: Resident dimension (SCD Type 1). email and phone are PII and are masked in Snowflake.
+    columns:
+      - name: resident_key
+        data_tests: [unique, not_null]
+      - name: email
+        config:
+          meta: {sensitivity: pii}
+      - name: phone
+        config:
+          meta: {sensitivity: pii}
+
+  - name: dim_unit
+    description: Unit dimension (SCD Type 2). One row per unit version; market_rent history.
+    columns:
+      - name: unit_key
+        data_tests: [unique, not_null]
+
+  - name: fct_leases
+    description: Accumulating snapshot fact. One row per lease with lifecycle milestones.
+    columns:
+      - name: lease_id
+        data_tests: [unique, not_null]
+      - name: unit_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_unit')
+                field: unit_key
+      - name: resident_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_resident')
+                field: resident_key
+      - name: property_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_property')
+                field: property_key
+
+  - name: fct_unit_occupancy_monthly
+    description: Periodic snapshot fact. One row per unit per month end.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [unit_id, month_end]
+
+  - name: mart_property_kpis_monthly
+    description: >
+      Enterprise metrics per property per month. occupancy_rate = occupied units / total units
+      at month end. renewal_rate = renewed leases / leases that expired in the month.
+      avg_turn_days = average vacant days before new (non-renewal) leases that started in the month.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [property_id, month_end]
+    columns:
+      - name: occupancy_rate
+        description: occupancy_rate = occupied units / total units at month end
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: renewal_rate
+        description: renewal_rate = renewed leases / leases expiring in the month. A lease counts as renewed when the next lease on the same unit is a renewal.
+      - name: avg_turn_days
+        description: avg_turn_days = average number of vacant days before new (non-renewal) leases that started in the month
+

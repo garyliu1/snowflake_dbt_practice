@@ -1,0 +1,10 @@
+# SCD Type 2 history of unit attributes (mainly market_rent).
+# Each change to a tracked column closes the old row (dbt_valid_to)
+# and opens a new row (dbt_valid_from).
+snapshots:
+  - name: snap_units
+    relation: ref('raw_units')
+    config:
+      unique_key: unit_id
+      strategy: check
+      check_cols: [market_rent, unit_type, square_feet]
